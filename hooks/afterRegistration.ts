@@ -3,6 +3,7 @@ import { isServer } from '@vue-storefront/core/helpers';
 import createProductData from '../helper/createProductData';
 import EventBus from '@vue-storefront/core/compatibility/plugins/event-bus'
 import i18n from '@vue-storefront/i18n'
+import { ProductService } from '@vue-storefront/core/data-resolver/ProductService'
 
 declare const window
 
@@ -21,16 +22,35 @@ export function afterRegistration (appConfig, store) {
       let products = event.detail || []
       console.log(products)
 
-      if(products && products.length <= 0) {
-        return []
+      if (products && products.length <= 0) {
+        return
       }
 
-      EventBus.$emit('notification-progress-start', i18n.t('Please wait ...'))
+      EventBus.$emit('notification-progress-start', i18n.t('Please wait a moment ...'))
       const productsToAdd = []
       for (const item of products) {
-        const product = await store.dispatch('product/single', { options: { sku: item.sku } })
-        product.qty = item.quantity
-        productsToAdd.push(product)
+        const product = await ProductService.getProductByKey({
+          options: { sku: item.sku },
+          key: 'sku',
+          skipCache: false
+        })
+
+        if (product) {
+          product.qty = item.quantity
+          productsToAdd.push(product)
+        } else {
+          EventBus.$emit('notification-progress-stop', {})
+          notifyUser({
+            type: 'error',
+            message: i18n.t('Unable to add to cart, invalid product: ') + ' ' + item.sku,
+            action1: { label: i18n.t('OK') },
+          })
+        }
+      }
+
+      if (productsToAdd.length === 0) {
+        EventBus.$emit('notification-progress-stop', {})
+        return
       }
 
       let diffLog = await store.dispatch('cart/addItems', { productsToAdd })
