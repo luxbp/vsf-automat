@@ -20,7 +20,6 @@ export function afterRegistration (appConfig, store) {
 
     window.addEventListener('automat/addProductsToCartRequest', async (event: CustomEvent) => {
       let products = event.detail || []
-      console.log(products)
 
       if (products && products.length <= 0) {
         return
@@ -36,7 +35,7 @@ export function afterRegistration (appConfig, store) {
         })
 
         if (product) {
-          product.qty = item.quantity
+          product.qty = item.quantity || 1
           productsToAdd.push(product)
         } else {
           EventBus.$emit('notification-progress-stop', {})
