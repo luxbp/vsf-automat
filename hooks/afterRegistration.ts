@@ -18,7 +18,7 @@ export function afterRegistration (appConfig, store) {
         }
     }
 
-    window.addEventListener('addProductsToCartRequest', async (event: CustomEvent) => {
+    window.addEventListener('automat/addProductsToCartRequest', async (event: CustomEvent) => {
       let products = event.detail || []
       console.log(products)
 
