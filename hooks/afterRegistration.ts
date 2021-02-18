@@ -75,14 +75,14 @@ export function afterRegistration (appConfig, store) {
 
     store.subscribe(({ type, payload }, state) => {
       let env = appConfig.automat.env || 'production'
-      if (type.endsWith(ORDER_LAST_ORDER_WITH_CONFIRMATION) && env === 'production') {
+      if (type.endsWith(ORDER_LAST_ORDER_WITH_CONFIRMATION)) {
         // load
         const load = new Promise((resolve, reject) => {
           const script = document.createElement('script')
           document.body.appendChild(script)
           script.onload = resolve
           script.onerror = reject
-          script.src = 'https://ash-telemetry.production.bot-brain.com/snippet/v0.js?' + appConfig.automat.clientId
+          script.src = 'https://ash-telemetry.production.bot-brain.com/snippet/v0.js?' + appConfig.automat.clientId + (env === 'staging' ? '-staging' : '')
         })
 
         load.then(() => {
