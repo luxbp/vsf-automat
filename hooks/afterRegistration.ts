@@ -4,6 +4,7 @@ import createProductData from '../helper/createProductData';
 import EventBus from '@vue-storefront/core/compatibility/plugins/event-bus'
 import i18n from '@vue-storefront/i18n'
 import { ProductService } from '@vue-storefront/core/data-resolver/ProductService'
+import { ORDER_LAST_ORDER_WITH_CONFIRMATION } from '@vue-storefront/core/modules/order/store/mutation-types'
 
 declare const window
 
@@ -74,7 +75,7 @@ export function afterRegistration (appConfig, store) {
 
     store.subscribe(({ type, payload }, state) => {
       let env = appConfig.automat.env || 'production'
-      if (type.endsWith('order/order/LAST_ORDER_CONFIRMATION') && env === 'production') {
+      if (type.endsWith(ORDER_LAST_ORDER_WITH_CONFIRMATION) && env === 'production') {
         // load
         const load = new Promise((resolve, reject) => {
           const script = document.createElement('script')
