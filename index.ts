@@ -24,6 +24,11 @@ export const AutomatModule: StorefrontModule = function ({ store, router, appCon
       name: 'conversation',
       path: '/conversation',
       component: AutomatConversationPage
+    },
+    {
+      name: 'hair-quiz',
+      path: '/hair-quiz',
+      component: AutomatConversationPage
     }
   ])
 }
