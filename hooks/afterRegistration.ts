@@ -12,11 +12,11 @@ export function afterRegistration (appConfig, store) {
   if (!isServer && appConfig.automat && appConfig.automat.clientId) {
 
     let notifyUser = (notificationData) => {
-        if (notificationData.type === 'success') {
-          store.dispatch('ui/toggleMicrocart')
-        } else {
-          store.dispatch('notification/spawnNotification', notificationData, { root: true })
-        }
+      if (notificationData.type === 'success') {
+        store.dispatch('ui/toggleMicrocart')
+      } else {
+        store.dispatch('notification/spawnNotification', notificationData, { root: true })
+      }
     }
 
     window.addEventListener('automat/addProductsToCartRequest', async (event: CustomEvent) => {
@@ -82,18 +82,47 @@ export function afterRegistration (appConfig, store) {
           document.body.appendChild(script)
           script.onload = resolve
           script.onerror = reject
-          script.src = 'https://ash-telemetry.production.bot-brain.com/snippet/v0.js?' + appConfig.automat.clientId + (env === 'staging' ? '-staging' : '')
+          script.id = 'automat-ash-snippet'
+          script.setAttribute('data-client-id', appConfig.automat.clientId)
+          script.src = env === 'production'
+            ? 'https://cdn.automat-ai.com/ash-telemetry/v2/snippet.js'
+            : 'https://cdn.automat-ai.com/ash-telemetry-staging/v2/snippet.js'
         })
 
         load.then(() => {
           Logger.debug('Automat.ai post purchase tracking loaded.')
+          window.automatAshV2DataLayer = window.automatAshV2DataLayer || [];
+
           const products = payload.order.products.map((product, index) => createProductData(product, { position: index }));
 
-          window.automatDataLayer = window.automatDataLayer || []
+          store.dispatch(
+            'user/getOrdersHistory',
+            { refresh: true, useCache: false }
+          ).then(() => {
+            const orderHistory = state.user.orders_history;
+            const cartHistory = Object.assign({}, state.cart);
 
-          const data = { type: 'purchase', products: products, currency: 'USD' }
-          window.automatDataLayer.push(data)
-          EventBus.$emit('automat-post-purchase', data)
+            // in the event this is empty, tag manager should pull order and tax from CartStateSubscriber
+            let data: Record<any, any> = {};
+
+            if (!orderHistory && cartHistory.platformTotals) {
+              data.type = 'Purchase/v1'
+              data.products = products
+              data.discountCode = cartHistory.platformTotals.coupon_code
+              data.total = cartHistory.platformTotals.grand_total
+              data.subtotal = cartHistory.platformTotals.subtotal
+            } else {
+              const orderId = payload.confirmation.backendOrderId;
+              const order = orderHistory.items.find((order) => (order['entity_id'] || '').toString() === orderId);
+              data.type = 'Purchase/v1'
+              data.products = products
+              data.discountCode = order.coupon_code
+              data.total = order.grand_total
+              data.subtotal = order.subtotal
+            }
+            window.automatAshV2DataLayer.push(data)
+            EventBus.$emit('automat-post-purchase', data)
+          })
         }).catch(e => {
           Logger.debug('Automat.ai unable to push to data layer.')
         })
