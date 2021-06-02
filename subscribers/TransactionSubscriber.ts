@@ -43,7 +43,7 @@ export default (store, appConfig) => store.subscribe(({ type, payload }, state) 
         if (!orderHistory && cartHistory.platformTotals) {
           data.type = 'Purchase/v1'
           data.products = products
-          data.discountCode = cartHistory.platformTotals.coupon_code
+          data.discountCode = cartHistory.platformTotals.coupon_code || null
           data.total = cartHistory.platformTotals.grand_total
           data.subtotal = cartHistory.platformTotals.subtotal
         } else {
