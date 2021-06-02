@@ -51,7 +51,7 @@ export default (store, appConfig) => store.subscribe(({ type, payload }, state) 
           const order = orderHistory.items.find((order) => (order['entity_id'] || '').toString() === orderId);
           data.type = 'Purchase/v1'
           data.products = products
-          data.discountCode = order.coupon_code
+          data.discountCode = order.coupon_code || null
           data.total = order.grand_total
           data.subtotal = order.subtotal
         }
