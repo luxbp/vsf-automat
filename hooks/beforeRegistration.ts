@@ -6,7 +6,7 @@ export function beforeRegistration (appConfig, store) {
   if (!isServer && appConfig.automat && appConfig.automat.clientId) {
     let env = appConfig.automat.env || 'production'
 
-    const load = new Promise((resolve, reject) => {
+    const deployments = new Promise((resolve, reject) => {
       const script = document.createElement('script')
       document.body.appendChild(script)
       script.onload = resolve
@@ -15,11 +15,31 @@ export function beforeRegistration (appConfig, store) {
       script.src = 'https://cdn.automat-ai.com/' + appConfig.automat.clientId + '/deployments/' + env + '/index.js'
     })
 
-    load.then(() => {
-      EventBus.$emit('automat-loaded')
-      Logger.debug('Automat.ai loaded.')
+    deployments.then(() => {
+      EventBus.$emit('automat-cdn-loaded')
+      Logger.debug('Automat.ai CDN loaded.')
     }).catch(e => {
-      Logger.debug('Automat.ai NOT loaded.')
+      Logger.debug('Automat.ai CDN NOT loaded.')
+    })
+
+    const ash = new Promise((resolve, reject) => {
+      const script = document.createElement('script')
+      document.body.appendChild(script)
+      script.onload = resolve
+      script.onerror = reject
+      script.id = 'automat-ash-snippet'
+      script.async = true
+      script.setAttribute('data-client-id', appConfig.automat.clientId)
+      script.src = env === 'production'
+        ? 'https://cdn.automat-ai.com/ash-telemetry/v2/snippet.js'
+        : 'https://cdn.automat-ai.com/ash-telemetry-staging/v2/snippet.js'
+    })
+
+    ash.then(() => {
+      EventBus.$emit('automat-ash-loaded')
+      Logger.debug('Automat.ai ASH loaded.')
+    }).catch(e => {
+      Logger.debug('Automat.ai ASH NOT loaded.')
     })
   }
 }
