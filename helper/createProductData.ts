@@ -1,9 +1,8 @@
 export default (product, opts: Record<string, any> = {}) => {
   return {
-    sku: product.sku,
-    productId: product.sku,
+    id: product.sku,
     variantIds: [product.sku],
-    price: product.price,
+    price: (parseFloat(product.price || 0) * 100),
     quantity: product.qty || opts.qty,
     discounted: !!opts.coupon_code,
     displayName: product.name
