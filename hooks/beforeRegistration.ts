@@ -29,6 +29,7 @@ export function beforeRegistration (appConfig, store) {
       script.onerror = reject
       script.id = 'automat-ash-snippet'
       script.setAttribute('data-client-id', appConfig.automat.clientId)
+      script.setAttribute('data-domain', appConfig.automat.domain)
       script.src = env === 'production'
         ? 'https://cdn.automat-ai.com/ash-telemetry/v2/snippet.js'
         : 'https://cdn.automat-ai.com/ash-telemetry-staging/v2/snippet.js'
