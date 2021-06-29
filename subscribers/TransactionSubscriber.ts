@@ -1,9 +1,7 @@
 import { Logger } from '@vue-storefront/core/lib/logger';
-import { isServer } from '@vue-storefront/core/helpers';
 import createProductData from '../helper/createProductData';
+import dollarsToCents from '../helper/dollarsToCents'
 import EventBus from '@vue-storefront/core/compatibility/plugins/event-bus'
-import i18n from '@vue-storefront/i18n'
-import { ProductService } from '@vue-storefront/core/data-resolver/ProductService'
 import { ORDER_LAST_ORDER_WITH_CONFIRMATION } from '@vue-storefront/core/modules/order/store/mutation-types'
 
 declare const window
@@ -14,10 +12,11 @@ export default (store, appConfig) => store.subscribe(({ type, payload }, state) 
     window.automatAshV2DataLayer = window.automatAshV2DataLayer || [];
 
     const products = payload.order.products.map((product, index) => createProductData(product, {position: index}));
+    const orderId = payload.confirmation.backendOrderId;
 
     store.dispatch(
       'user/getOrdersHistory',
-      {refresh: true, useCache: false}
+      { refresh: true, useCache: false }
     ).then(() => {
       const orderHistory = state.user.orders_history;
       const cartHistory = Object.assign({}, state.cart);
@@ -29,16 +28,15 @@ export default (store, appConfig) => store.subscribe(({ type, payload }, state) 
         data.type = 'Purchase/v1'
         data.products = products
         data.discountCode = cartHistory.platformTotals.coupon_code || null
-        data.total = cartHistory.platformTotals.grand_total
-        data.subtotal = cartHistory.platformTotals.subtotal
+        data.total = dollarsToCents(cartHistory.platformTotals.grand_total)
+        data.subTotal = dollarsToCents(cartHistory.platformTotals.subtotal)
       } else {
-        const orderId = payload.confirmation.backendOrderId;
         const order = orderHistory.items.find((order) => (order['entity_id'] || '').toString() === orderId);
         data.type = 'Purchase/v1'
         data.products = products
         data.discountCode = order.coupon_code || null
-        data.total = order.grand_total
-        data.subtotal = order.subtotal
+        data.total = dollarsToCents(order.grand_total)
+        data.subTotal = dollarsToCents(order.subtotal)
       }
       window.automatAshV2DataLayer.push(data)
       EventBus.$emit('automat-post-purchase', data)
